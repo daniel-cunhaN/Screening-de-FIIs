@@ -27,7 +27,7 @@ public class BrapiService {
     private String tickers;
 
     public void updateFiiData() {
-        if (isTokenMissing()) {
+        if (token == null || token.isEmpty() || "${BRAPI_TOKEN}".equals(token)) {
             log.error("Brapi token is not configured. Please set the BRAPI_TOKEN environment variable.");
             return;
         }
@@ -37,52 +37,44 @@ public class BrapiService {
         try {
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response != null && response.containsKey("fiis")) {
-                processFiisData((List<Map<String, Object>>) response.get("fiis"));
+                List<Map<String, Object>> fiisData = (List<Map<String, Object>>) response.get("fiis");
+
+                for (Map<String, Object> data : fiisData) {
+                    String symbol = (String) data.get("symbol");
+                    
+                    if (data.get("price") == null) {
+                        log.warn("Skipping FII {}: Price is missing", symbol);
+                        continue;
+                    }
+
+                    Double price = data.get("price") != null ? Double.valueOf(data.get("price").toString()) : 0.0;
+                    Double dy = data.get("dividendYield12m") != null ? Double.valueOf(data.get("dividendYield12m").toString()) : 0.0;
+                    Double pvp = data.get("priceToNav") != null ? Double.valueOf(data.get("priceToNav").toString()) : 0.0;
+                    Double vacancy = data.get("vacancy") != null ? Double.valueOf(data.get("vacancy").toString()) : 0.0;
+                    Double netWorth = data.get("netWorth") != null ? Double.valueOf(data.get("netWorth").toString()) : 0.0;
+                    Double equityValue = data.get("equityValue") != null ? Double.valueOf(data.get("equityValue").toString()) : 0.0;
+                    String segment = (String) data.get("segment");
+                    String type = (String) data.get("type");
+
+                    Fii fii = Fii.builder()
+                            .ticker(symbol)
+                            .price(price)
+                            .dividendYield(dy)
+                            .pvp(pvp)
+                            .vacancy(vacancy)
+                            .netWorth(netWorth)
+                            .equityValue(equityValue)
+                            .segment(segment)
+                            .type(type)
+                            .lastUpdate(LocalDateTime.now())
+                            .build();
+
+                    fiiRepository.save(fii);
+                    log.info("Updated FII: {}", symbol);
+                }
             }
         } catch (Exception e) {
             log.error("Error fetching data from Brapi: {}", e.getMessage());
-        }
-    }
-
-    private boolean isTokenMissing() {
-        return token == null || token.isEmpty() || "${BRAPI_TOKEN}".equals(token);
-    }
-
-    private void processFiisData(List<Map<String, Object>> fiisData) {
-        for (Map<String, Object> data : fiisData) {
-            String symbol = (String) data.get("symbol");
-            
-            if (data.get("price") == null) {
-                log.warn("Skipping FII {}: Price is missing", symbol);
-                continue;
-            }
-
-            Fii fii = Fii.builder()
-                    .ticker(symbol)
-                    .price(toDouble(data.get("price")))
-                    .dividendYield(toDouble(data.get("dividendYield12m")))
-                    .dividendYield1m(toDouble(data.get("dividendYield1m")))
-                    .pvp(toDouble(data.get("priceToNav")))
-                    .vacancy(toDouble(data.get("vacancy")))
-                    .netWorth(toDouble(data.get("netWorth")))
-                    .equityValue(toDouble(data.get("equityValue")))
-                    .segment((String) data.get("segment"))
-                    .type((String) data.get("type"))
-                    .lastUpdate(LocalDateTime.now())
-                    .build();
-
-            fiiRepository.save(fii);
-            log.info("Updated FII: {}", symbol);
-        }
-    }
-
-    private Double toDouble(Object value) {
-        if (value == null) return 0.0;
-        try {
-            return Double.valueOf(value.toString());
-        } catch (NumberFormatException e) {
-            log.warn("Could not convert value to Double: {}", value);
-            return 0.0;
         }
     }
 }

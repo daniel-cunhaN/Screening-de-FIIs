@@ -24,8 +24,6 @@ public class Fii {
     private Double price;
     
     private Double dividendYield; // 12m
-
-    private Double dividendYield1m;
     
     private Double pvp; // priceToNav
 
