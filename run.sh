@@ -5,9 +5,11 @@
 # =================================================================
 
 # 1. Credenciais
-# Use: export DB_PASSWORD='sua_senha' no terminal antes de rodar.
-export DB_PASSWORD='SUA_SENHA_AQUI'
-export BRAPI_TOKEN='SEU_TOKEN_DA_BRAPI_AQUI'
+# Insira seus dados antes de rodar.
+export DB_URL='Insira sua URL do banco (ex: jdbc:postgresql://host/neondb?sslmode=require)'
+export DB_USERNAME='Insira seu username do banco'
+export DB_PASSWORD='Insira sua senha do banco'
+export BRAPI_TOKEN='Insira seu token da Brapi (opcional)'
 
 # 2. Compila e roda o projeto usando o wrapper do Maven (./mvnw)
 echo "Iniciando a aplicação..."

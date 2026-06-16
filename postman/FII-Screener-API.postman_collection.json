@@ -1,0 +1,429 @@
+{
+  "info": {
+    "_postman_id": "fii-screener-api-v1",
+    "name": "🏢 FII Screener API",
+    "description": "Coleção completa para testar os endpoints da Plataforma de Screener e Análise de FIIs.\n\n## Setup\n1. Importe esta collection no Postman ou Insomnia\n2. Certifique-se de que a aplicação está rodando (`./run.sh`)\n3. A variável `baseUrl` já está configurada para `http://localhost:8080`\n\n## Endpoints Disponíveis\n- **GET /api/fiis** — Lista todos os FIIs cadastrados\n- **GET /api/fiis/{ticker}** — Busca um FII por ticker\n- **POST /api/fiis/update** — Trigger manual de atualização dos dados\n\n## Tickers Monitorados\nMXRF11, HGLG11, VISC11, BTLG11, KNIP11",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ticker",
+      "value": "MXRF11",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "📋 Listar Todos os FIIs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis"]
+        },
+        "description": "Retorna a lista completa de todos os FIIs cadastrados no banco de dados.\n\n**Retorno esperado:** Array JSON com objetos Fii contendo: ticker, price, dividendYield, dividendYield1m, pvp, vacancy, segment, netWorth, equityValue, type, lastUpdate."
+      },
+      "response": [
+        {
+          "name": "200 — Lista de FIIs",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "[\n  {\n    \"ticker\": \"MXRF11\",\n    \"price\": 10.45,\n    \"dividendYield\": 12.5,\n    \"dividendYield1m\": 1.04,\n    \"pvp\": 1.02,\n    \"vacancy\": 0.0,\n    \"segment\": \"Híbrido\",\n    \"netWorth\": 3500000000.0,\n    \"equityValue\": 10.25,\n    \"type\": \"Títulos e Val. Mob.\",\n    \"lastUpdate\": \"2026-06-15T18:00:00\"\n  },\n  {\n    \"ticker\": \"HGLG11\",\n    \"price\": 162.30,\n    \"dividendYield\": 8.2,\n    \"dividendYield1m\": 0.68,\n    \"pvp\": 1.15,\n    \"vacancy\": 0.0,\n    \"segment\": \"Logística\",\n    \"netWorth\": 8000000000.0,\n    \"equityValue\": 141.00,\n    \"type\": \"Tijolo\",\n    \"lastUpdate\": \"2026-06-15T18:00:00\"\n  }\n]"
+        },
+        {
+          "name": "200 — Lista vazia (sem dados)",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "[]"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Response time is acceptable', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});",
+              "",
+              "if (pm.response.json().length > 0) {",
+              "    pm.test('Each FII has required fields', function () {",
+              "        var fii = pm.response.json()[0];",
+              "        pm.expect(fii).to.have.property('ticker');",
+              "        pm.expect(fii).to.have.property('price');",
+              "        pm.expect(fii).to.have.property('dividendYield');",
+              "        pm.expect(fii).to.have.property('pvp');",
+              "        pm.expect(fii).to.have.property('lastUpdate');",
+              "    });",
+              "",
+              "    // Salva o primeiro ticker para uso nos próximos testes",
+              "    pm.collectionVariables.set('ticker', pm.response.json()[0].ticker);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Buscar FII por Ticker",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/{{ticker}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "{{ticker}}"]
+        },
+        "description": "Busca um FII específico pelo seu ticker.\n\n**Parâmetro:** `ticker` — código do FII (ex: MXRF11, HGLG11)\n\n**Retorno:** Objeto Fii ou 404 se não encontrado."
+      },
+      "response": [
+        {
+          "name": "200 — FII encontrado",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis/MXRF11",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis", "MXRF11"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"ticker\": \"MXRF11\",\n  \"price\": 10.45,\n  \"dividendYield\": 12.5,\n  \"dividendYield1m\": 1.04,\n  \"pvp\": 1.02,\n  \"vacancy\": 0.0,\n  \"segment\": \"Híbrido\",\n  \"netWorth\": 3500000000.0,\n  \"equityValue\": 10.25,\n  \"type\": \"Títulos e Val. Mob.\",\n  \"lastUpdate\": \"2026-06-15T18:00:00\"\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has correct ticker', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.ticker).to.eql(pm.collectionVariables.get('ticker'));",
+              "});",
+              "",
+              "pm.test('FII has all required fields', function () {",
+              "    var fii = pm.response.json();",
+              "    pm.expect(fii).to.have.property('ticker');",
+              "    pm.expect(fii).to.have.property('price');",
+              "    pm.expect(fii).to.have.property('dividendYield');",
+              "    pm.expect(fii).to.have.property('pvp');",
+              "    pm.expect(fii).to.have.property('lastUpdate');",
+              "});",
+              "",
+              "pm.test('Price is a positive number', function () {",
+              "    pm.expect(pm.response.json().price).to.be.above(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Buscar FII — HGLG11",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/HGLG11",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "HGLG11"]
+        },
+        "description": "Busca o FII HGLG11 (logística)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Ticker is HGLG11', function () {",
+              "    pm.expect(pm.response.json().ticker).to.eql('HGLG11');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Buscar FII — VISC11",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/VISC11",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "VISC11"]
+        },
+        "description": "Busca o FII VISC11 (shopping centers)."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Ticker is VISC11', function () {",
+              "    pm.expect(pm.response.json().ticker).to.eql('VISC11');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "❌ Buscar FII Inexistente (404)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/XXXX99",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "XXXX99"]
+        },
+        "description": "Testa a busca de um ticker inexistente. Deve retornar HTTP 404.\n\n**Resultado esperado:** Status 404 (Not Found) sem body."
+      },
+      "response": [
+        {
+          "name": "404 — FII não encontrado",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis/XXXX99",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis", "XXXX99"]
+            }
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [],
+          "body": ""
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 404 for invalid ticker', function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('Response body is empty', function () {",
+              "    pm.expect(pm.response.text()).to.be.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔄 Trigger de Atualização Manual",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/update",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "update"]
+        },
+        "description": "Dispara uma atualização manual dos dados de FIIs via StatusInvest API.\n\n**Atenção:** Este endpoint faz chamadas externas à API do StatusInvest e pode demorar alguns segundos.\n\n**Retorno de sucesso:** `{\"message\": \"FII data updated successfully from StatusInvest API.\"}`\n\n**Retorno de erro:** `{\"error\": \"Failed to update FII data: <mensagem>\"}`"
+      },
+      "response": [
+        {
+          "name": "200 — Atualização com sucesso",
+          "originalRequest": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis", "update"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"message\": \"FII data updated successfully from StatusInvest API.\"\n}"
+        },
+        {
+          "name": "500 — Erro na atualização",
+          "originalRequest": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/fiis/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fiis", "update"]
+            }
+          },
+          "status": "Internal Server Error",
+          "code": 500,
+          "_postman_previewlanguage": "json",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"error\": \"Failed to update FII data: Connection refused\"\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 or 500', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+              "});",
+              "",
+              "if (pm.response.code === 200) {",
+              "    pm.test('Success message returned', function () {",
+              "        pm.expect(pm.response.json().message).to.include('successfully');",
+              "    });",
+              "} else {",
+              "    pm.test('Error message returned', function () {",
+              "        pm.expect(pm.response.json()).to.have.property('error');",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Buscar FII — lowercase (mxrf11)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/fiis/mxrf11",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "fiis", "mxrf11"]
+        },
+        "description": "Testa se a busca é case-insensitive (o controller converte para uppercase).\n\n**Resultado esperado:** 200 com os dados do MXRF11."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 (case-insensitive)', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Ticker is returned in uppercase', function () {",
+              "    var fii = pm.response.json();",
+              "    pm.expect(fii.ticker).to.eql('MXRF11');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
