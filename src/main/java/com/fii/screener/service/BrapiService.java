@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import com.fii.screener.client.BrapiApiClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,24 +18,14 @@ import java.util.Map;
 public class BrapiService {
 
     private final FiiRepository fiiRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${brapi.token}")
-    private String token;
+    private final BrapiApiClient brapiApiClient;
 
     @Value("${fii.tickers}")
     private String tickers;
 
     public void updateFiiData() {
-        if (token == null || token.isEmpty() || "${BRAPI_TOKEN}".equals(token)) {
-            log.error("Brapi token is not configured. Please set the BRAPI_TOKEN environment variable.");
-            return;
-        }
-
-        String url = String.format("https://brapi.dev/api/v2/fii/indicators?symbols=%s&token=%s", tickers, token);
-
         try {
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = brapiApiClient.fetchFiiIndicators(tickers);
             if (response != null && response.containsKey("fiis")) {
                 List<Map<String, Object>> fiisData = (List<Map<String, Object>>) response.get("fiis");
 
