@@ -1,5 +1,7 @@
 package com.fii.screener.service;
 
+import com.fii.screener.dto.BrapiFiiDTO;
+import com.fii.screener.dto.BrapiResponseDTO;
 import com.fii.screener.model.Fii;
 import com.fii.screener.repository.FiiRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +12,6 @@ import com.fii.screener.client.BrapiApiClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,26 +26,26 @@ public class BrapiService {
 
     public void updateFiiData() {
         try {
-            Map<String, Object> response = brapiApiClient.fetchFiiIndicators(tickers);
-            if (response != null && response.containsKey("fiis")) {
-                List<Map<String, Object>> fiisData = (List<Map<String, Object>>) response.get("fiis");
+            BrapiResponseDTO response = brapiApiClient.fetchFiiIndicators(tickers);
+            if (response != null && response.fiis() != null) {
+                List<BrapiFiiDTO> fiisData = response.fiis();
 
-                for (Map<String, Object> data : fiisData) {
-                    String symbol = (String) data.get("symbol");
+                for (BrapiFiiDTO data : fiisData) {
+                    String symbol = data.symbol();
                     
-                    if (data.get("price") == null) {
+                    if (data.price() == null) {
                         log.warn("Skipping FII {}: Price is missing", symbol);
                         continue;
                     }
 
-                    Double price = data.get("price") != null ? Double.valueOf(data.get("price").toString()) : 0.0;
-                    Double dy = data.get("dividendYield12m") != null ? Double.valueOf(data.get("dividendYield12m").toString()) : 0.0;
-                    Double pvp = data.get("priceToNav") != null ? Double.valueOf(data.get("priceToNav").toString()) : 0.0;
-                    Double vacancy = data.get("vacancy") != null ? Double.valueOf(data.get("vacancy").toString()) : 0.0;
-                    Double netWorth = data.get("netWorth") != null ? Double.valueOf(data.get("netWorth").toString()) : 0.0;
-                    Double equityValue = data.get("equityValue") != null ? Double.valueOf(data.get("equityValue").toString()) : 0.0;
-                    String segment = (String) data.get("segment");
-                    String type = (String) data.get("type");
+                    Double price = data.price() != null ? data.price() : 0.0;
+                    Double dy = data.dividendYield12m() != null ? data.dividendYield12m() : 0.0;
+                    Double pvp = data.priceToNav() != null ? data.priceToNav() : 0.0;
+                    Double vacancy = data.vacancy() != null ? data.vacancy() : 0.0;
+                    Double netWorth = data.netWorth() != null ? data.netWorth() : 0.0;
+                    Double equityValue = data.equityValue() != null ? data.equityValue() : 0.0;
+                    String segment = data.segment();
+                    String type = data.type();
 
                     Fii fii = Fii.builder()
                             .ticker(symbol)

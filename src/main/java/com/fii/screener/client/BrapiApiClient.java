@@ -2,6 +2,7 @@ package com.fii.screener.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fii.screener.dto.BrapiResponseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,7 +12,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Map;
 
 @Component
 @Slf4j
@@ -33,7 +33,7 @@ public class BrapiApiClient {
                 .build();
     }
 
-    public Map<String, Object> fetchFiiIndicators(String tickers) {
+    public BrapiResponseDTO fetchFiiIndicators(String tickers) {
         if (token == null || token.isEmpty() || "${BRAPI_TOKEN}".equals(token)) {
             log.error("Brapi token is not configured.");
             throw new IllegalStateException("Brapi token is not configured.");
@@ -52,8 +52,8 @@ public class BrapiApiClient {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                // Parseia o JSON retornado para um Map (ou poderia ser um DTO específico)
-                return objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {});
+                // Parseia o JSON retornado para o DTO específico
+                return objectMapper.readValue(response.body(), BrapiResponseDTO.class);
             } else {
                 log.error("Error fetching data from Brapi. Status Code: {}, Body: {}", response.statusCode(), response.body());
                 throw new RuntimeException("Brapi API request failed with status: " + response.statusCode());
