@@ -139,23 +139,35 @@ public class StatusInvestService {
         Double lastDividend = parseDouble(data.get("ULTIMO DIVIDENDO"));
         Double dy1m = (price > 0.0) ? (lastDividend / price) * 100.0 : 0.0;
 
-        Fii fii = Fii.builder()
-                .ticker(symbol)
-                .price(price)
-                .dividendYield(parseDouble(data.get("DY")))
-                .dividendYield1m(dy1m)
-                .pvp(parseDouble(data.get("P/VP")))
-                .vacancy(0.0)
-                .netWorth(parseDouble(data.get("PATRIMONIO")))
-                .equityValue(parseDouble(data.get("VALOR PATRIMONIAL COTA")))
-                .segment(null) // CSV não inclui segmento
-                .type(data.get("GESTAO"))
-                .lastUpdate(LocalDateTime.now())
-                .build();
+        Optional<Fii> existingOpt = fiiRepository.findById(symbol);
 
-        fiiRepository.save(fii);
-        log.info("FII Salvo: {} | Preço: {} | DY: {}% | P/VP: {}", symbol, price,
-                parseDouble(data.get("DY")), parseDouble(data.get("P/VP")));
+        if (existingOpt.isPresent()) {
+            Fii fii = existingOpt.get();
+            fii.setPrice(price);
+            fii.setDividendYield(parseDouble(data.get("DY")));
+            fii.setPvp(parseDouble(data.get("P/VP")));
+            fii.setLastUpdate(LocalDateTime.now());
+            
+            fiiRepository.save(fii);
+            log.info("FII Atualizado (Apenas Preço, DY e P/VP): {} | Preço: {} | DY: {}% | P/VP: {}", symbol, price, fii.getDividendYield(), fii.getPvp());
+        } else {
+            Fii fii = Fii.builder()
+                    .ticker(symbol)
+                    .price(price)
+                    .dividendYield(parseDouble(data.get("DY")))
+                    .dividendYield1m(dy1m)
+                    .pvp(parseDouble(data.get("P/VP")))
+                    .vacancy(0.0)
+                    .netWorth(parseDouble(data.get("PATRIMONIO")))
+                    .equityValue(parseDouble(data.get("VALOR PATRIMONIAL COTA")))
+                    .segment(null) // CSV não inclui segmento
+                    .type(data.get("GESTAO"))
+                    .lastUpdate(LocalDateTime.now())
+                    .build();
+
+            fiiRepository.save(fii);
+            log.info("Novo FII Inserido: {} | Preço: {} | DY: {}% | P/VP: {}", symbol, price, fii.getDividendYield(), fii.getPvp());
+        }
     }
 
     private Double parseDouble(String value) {
