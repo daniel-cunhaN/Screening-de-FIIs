@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record BrapiFiiDTO(
         String symbol,
+        String name,
         Double price,
         Double dividendYield12m,
         Double priceToNav,
